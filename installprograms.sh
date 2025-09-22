@@ -114,7 +114,7 @@ if [[ $NON_INTERACTIVE == false ]]; then
 fi
 
 # Component definitions
-COMPONENT_NAMES=("zsh" "fzf" "ripgrep" "neovim" "dig" "zoxide" "tmux" "node" "miniconda" "apps" "all")
+COMPONENT_NAMES=("zsh" "fzf" "ripgrep" "neovim" "dig" "zoxide" "tmux" "node" "miniconda" "apps" "wm" "all")
 COMPONENT_DESCRIPTIONS=(
   "Zsh shell with Oh-My-Zsh"
   "Fuzzy finder (fzf)"
@@ -126,6 +126,7 @@ COMPONENT_DESCRIPTIONS=(
   "Node.js and npm"
   "Python environment manager"
   "Chrome, 1Password, Magnet, Hidden Bar (macOS only)"
+  "Aerospace & JankyBorders window management (macOS only)"
   "Install all components"
 )
 
@@ -134,12 +135,14 @@ EDITOR_COMPONENTS=("fzf" "ripgrep" "neovim")
 UTIL_COMPONENTS=("dig" "zoxide" "tmux")
 DEV_COMPONENTS=("node" "miniconda")
 APP_COMPONENTS=("apps")
+WM_COMPONENTS=("wm")
 ALL_COMPONENTS=(
   "${SHELL_COMPONENTS[@]}"
   "${EDITOR_COMPONENTS[@]}"
   "${UTIL_COMPONENTS[@]}"
   "${DEV_COMPONENTS[@]}"
   "${APP_COMPONENTS[@]}"
+  "${WM_COMPONENTS[@]}"
 )
 
 get_description() {
@@ -360,6 +363,16 @@ install_component() {
         print_warning "GUI apps are only available on macOS (skipping)"
       fi
       ;;
+    "wm")
+      if [[ $OS == "macos" ]]; then
+        brew install --cask nikitabobko/tap/aerospace
+        brew tap FelixKratz/formulae
+        brew install borders
+        print_success "Window management tools installed: Aerospace, JankyBorders"
+      else
+        print_warning "Window management tools are only available on macOS (skipping)"
+      fi
+      ;;
   esac
 }
 
@@ -389,6 +402,9 @@ if [[ $NON_INTERACTIVE == false ]]; then
   printf "\n%bAPPLICATIONS%b\n" "${BOLD}${BLUE}" "${RESET}"
   printf "  %b10)%b %-12s │ %s\n" "${BOLD}${CYAN}" "${RESET}" "Apps" "Chrome, 1Password, Magnet, Hidden Bar (macOS only)"
 
+  printf "\n%bWINDOW MANAGEMENT%b\n" "${BOLD}${BLUE}" "${RESET}"
+  printf "  %b11)%b %-12s │ %s\n" "${BOLD}${CYAN}" "${RESET}" "WM" "Aerospace & JankyBorders window management (macOS only)"
+
   printf "\n%bQUICK INSTALL%b\n" "${BOLD}${BLUE}" "${RESET}"
   printf "  %b0)%b %-12s │ %s\n" "${BOLD}${CYAN}" "${RESET}" "All" "Install all components"
 
@@ -410,6 +426,7 @@ if [[ $NON_INTERACTIVE == false ]]; then
         8) SELECTED_COMPONENTS+=("node") ;;
         9) SELECTED_COMPONENTS+=("miniconda") ;;
         10) SELECTED_COMPONENTS+=("apps") ;;
+        11) SELECTED_COMPONENTS+=("wm") ;;
       esac
     done
   fi
