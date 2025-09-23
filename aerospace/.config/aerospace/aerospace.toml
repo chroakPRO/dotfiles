@@ -50,6 +50,14 @@ run = 'layout floating'
 if.app-name-regex-substring = 'Cisco Secure Client'
 run = 'layout floating'
 
+[[on-window-detected]]
+if.app-name-regex-substring = 'Messages'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-name-regex-substring = 'Windows App'
+run = 'layout floating'
+
 # Possible values: (qwerty|dvorak)
 # See https://nikitabobko.github.io/AeroSpace/guide#key-mapping
 [key-mapping]
