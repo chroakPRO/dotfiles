@@ -401,7 +401,7 @@ if [[ $NON_INTERACTIVE == false ]]; then
   printf "  %b10)%b %-12s │ %s\n" "${BOLD}${CYAN}" "${RESET}" "Apps" "Chrome, 1Password, Magnet, Hidden Bar (macOS only)"
 
   printf "\n%bWINDOW MANAGEMENT%b\n" "${BOLD}${BLUE}" "${RESET}"
-  printf "  %b11)%b %-12s │ %s\n" "${BOLD}${CYAN}" "${RESET}" "WM" "Aerospace & JankyBorders window management (macOS only)"
+  printf "  %b11)%b %-12s │ %s\n" "${BOLD}${CYAN}" "${RESET}" "WM" "Aerospace window management (macOS only)"
 
   printf "\n%bQUICK INSTALL%b\n" "${BOLD}${BLUE}" "${RESET}"
   printf "  %b0)%b %-12s │ %s\n" "${BOLD}${CYAN}" "${RESET}" "All" "Install all components"
