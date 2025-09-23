@@ -126,7 +126,7 @@ COMPONENT_DESCRIPTIONS=(
   "Node.js and npm"
   "Python environment manager"
   "Chrome, 1Password, Magnet, Hidden Bar (macOS only)"
-  "Aerospace & JankyBorders window management (macOS only)"
+  "Aerospace window management (macOS only)"
   "Install all components"
 )
 
@@ -366,9 +366,7 @@ install_component() {
     "wm")
       if [[ $OS == "macos" ]]; then
         brew install --cask nikitabobko/tap/aerospace
-        brew tap FelixKratz/formulae
-        brew install borders
-        print_success "Window management tools installed: Aerospace, JankyBorders"
+        print_success "Window management tools installed: Aerospace"
       else
         print_warning "Window management tools are only available on macOS (skipping)"
       fi
