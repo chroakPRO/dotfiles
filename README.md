@@ -1,7 +1,3 @@
-Here’s a drop-in **README.md** you can put at the root of your repo.
-
----
-
 # dotfiles
 
 One-command, cross-platform dotfiles managed with **GNU Stow**.
@@ -205,6 +201,3 @@ Minimal, predictable symlink management. No magic.
 **How do I add macOS-only stuff later?**
 Put a package at the root and add its name to `MAC_PACKAGES` in `bootstrap.sh`. Or place it under `os/Darwin/<pkg>/…`.
 
----
-
-That’s it. If you want, I can tailor the README with your actual repo URL and hostnames.
