@@ -148,3 +148,111 @@ alias scpp='scp -o PreferredAuthentications=password'
 
 # Final PATH override - ensure conda comes first
 export PATH="/Users/chek/miniconda/bin:$PATH"
+
+# --- dnsrecon helpers (records-only, no transfers) -------------------
+
+# Avoid alias/function name collisions
+unalias dnscheck 2>/dev/null
+unalias dnscheck_save 2>/dev/null
+
+# Resolve a usable dnsrecon command:
+_dnsrecon_cmd() {
+  local candidates=(
+    dnsrecon
+    dnsrecon.py
+    "$HOME/Documents/Github/dnsrecon/dnsrecon.py"
+  )
+
+  local c
+  for c in "${candidates[@]}"; do
+    if command -v "$c" >/dev/null 2>&1; then
+      echo "$c"
+      return 0
+    fi
+    if [ -f "$c" ]; then
+      if [ -x "$c" ]; then
+        echo "$c"
+      else
+        echo "python3 $c"
+      fi
+      return 0
+    fi
+  done
+  return 1
+}
+
+# Default wordlist path (optional - used only if present)
+_dns_wordlist="${HOME}/.dnsrecon/wordlists/subdomains.txt"
+
+# -------------------------
+# dnscheck: console-only, records-only (no AXFR/zonewalk)
+# Usage: dnscheck example.com
+# Performs: std enumeration (SOA/NS/A/AAAA/MX/SRV) + passive crt.sh, Bing, Yandex
+# -------------------------
+dnscheck() {
+  if [ -z "$1" ]; then
+    echo "Usage: dnscheck <domain>"
+    return 1
+  fi
+
+  local domain="$1"
+  local threads=30
+  local lifetime=3.0
+  local cmd
+  cmd="$(_dnsrecon_cmd)" || { echo "dnsrecon not found. Put it in \$PATH or clone it under ~/Documents/Github/dnsrecon/"; return 1; }
+
+  local extra=()
+  if [ -f "$_dns_wordlist" ]; then
+    # optional brute force if you want; comment out the next line to skip brute forcing
+    extra=(-D "$_dns_wordlist" -f)
+  fi
+
+  echo "== DNSrecon records-only analysis (no transfers) for: $domain =="
+  # Use explicit type 'std' to avoid AXFR/zonewalk and keep output concise
+  eval "$cmd" -d "\"$domain\"" -t std \
+    -k -b -y \
+    "${extra[@]}" \
+    --threads "$threads" --lifetime "$lifetime" -v
+}
+
+# -------------------------
+# dnscheck_save: console + save JSON/DB/log, records-only
+# Usage: dnscheck_save example.com
+# -------------------------
+dnscheck_save() {
+  if [ -z "$1" ]; then
+    echo "Usage: dnscheck_save <domain>"
+    return 1
+  fi
+
+  local domain="$1"
+  local base_dir="$HOME/dnscheck_logs/$domain"
+  mkdir -p "$base_dir"
+  local ts
+  ts=$(date -u +"%Y%m%dT%H%M%SZ")
+  local json_file="$base_dir/${domain}_dnsrecon_${ts}.json"
+  local db_file="$base_dir/${domain}_dnsrecon_${ts}.db"
+  local log_file="$base_dir/${domain}_dnsrecon_${ts}.log"
+
+  local threads=30
+  local lifetime=3.0
+  local cmd
+  cmd="$(_dnsrecon_cmd)" || { echo "dnsrecon not found. Put it in \$PATH or clone it under ~/Documents/Github/dnsrecon/"; return 1; }
+
+  local extra=()
+  if [ -f "$_dns_wordlist" ]; then
+    # optional brute force; comment out to skip brute forcing
+    extra=(-D "$_dns_wordlist" -f)
+  fi
+
+  echo "Saving JSON -> $json_file"
+  echo "Saving DB   -> $db_file"
+  echo "Streaming output to console..."
+  eval "$cmd" -d "\"$domain\"" -t std \
+    -k -b -y \
+    "${extra[@]}" \
+    --threads "$threads" --lifetime "$lifetime" -v \
+    --db "\"$db_file\"" -j "\"$json_file\"" 2>&1 | tee "$log_file"
+}
+
+d
