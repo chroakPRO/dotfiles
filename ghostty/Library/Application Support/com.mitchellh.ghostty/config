@@ -51,4 +51,3 @@ keybind = global:ctrl+alt+cmd+space=toggle_quick_terminal
 quick-terminal-position = center
 quick-terminal-space-behavior = move
 quick-terminal-autohide = false
-macos-titlebar-style = hidden
