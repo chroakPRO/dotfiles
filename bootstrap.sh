@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # ---- which packages to stow ----
-PACKAGES=(zsh nvim tmux ghostty)   # common to all OSes
-MAC_PACKAGES=(aerospace)           # macOS-only packages
+PACKAGES=(zsh nvim tmux)                               # common to all OSes
+MAC_PACKAGES=(ghostty aerospace yabai skhd)           # macOS-only packages
 LINUX_PACKAGES=()                  # linux-only packages (add later if needed)
 # --------------------------------
 
@@ -73,10 +73,10 @@ extract_conflict_paths() {
       # everything after the last colon+space
       path="${line##*: }"
     elif printf '%s\n' "$line" | grep -q 'cannot stow ' && printf '%s\n' "$line" | grep -q ' over existing target '; then
-      # extract between "over existing target " and " since"
-      path="$(printf '%s\n' "$line" | sed -n 's/.*over existing target \([^ ]*\) since.*/\1/p')"
+      # extract between "over existing target " and " since", preserving spaces
+      path="$(printf '%s\n' "$line" | sed -n 's/.*over existing target \(.*\) since.*/\1/p')"
       # fallback: if no "since ..." present
-      [ -z "${path:-}" ] && path="$(printf '%s\n' "$line" | sed -n 's/.*over existing target \([^ ]*\)$/\1/p')"
+      [ -z "${path:-}" ] && path="$(printf '%s\n' "$line" | sed -n 's/.*over existing target \(.*\)$/\1/p')"
       [ -z "${path:-}" ] && continue
     else
       continue

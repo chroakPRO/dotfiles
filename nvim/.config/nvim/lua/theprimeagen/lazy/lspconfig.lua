@@ -131,6 +131,12 @@ return {
           },
         })
       end,
+      ["omnisharp"] = function()
+        -- configure omnisharp server
+        lspconfig["omnisharp"].setup({
+          capabilities = capabilities,
+        })
+      end,
     })
   end,
 }

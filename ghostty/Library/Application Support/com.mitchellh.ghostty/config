@@ -43,7 +43,12 @@
 # resize-overlay-duration = 4s 200ms
 #theme = "0x96f"
 theme = "Batman"
-font-family="Agave Nerd Font Mono Regular"
+font-family = "Agave Nerd Font Mono Regular"
 font-size = 16
 background-opacity = 0.95
 scrollback-limit = 4294967295
+keybind = global:ctrl+alt+cmd+space=toggle_quick_terminal
+quick-terminal-position = center
+quick-terminal-space-behavior = move
+quick-terminal-autohide = false
+macos-titlebar-style = hidden

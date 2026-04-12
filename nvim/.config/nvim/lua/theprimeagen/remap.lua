@@ -62,3 +62,7 @@ vim.keymap.set("n", "<C-BS>", "db")      -- In normal mode
 vim.keymap.set("i", "<C-Del>", "<C-o>dw")  -- In insert mode
 vim.keymap.set("n", "<C-Del>", "dw")       -- In normal mode
 
+-- Option+Backspace to delete word backwards
+vim.keymap.set("i", "<M-BS>", "<C-w>")
+vim.keymap.set("n", "<M-BS>", "db")
+

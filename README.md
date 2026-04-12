@@ -9,8 +9,8 @@ Supports macOS + Linux, OS/host overlays, and safe backups of existing files.
 * `Makefile` – convenience targets (`install`, `restow`, `unstow`)
 * Packages (symlinked into `$HOME`):
 
-  * `zsh/`, `nvim/`, `tmux/`, `ghostty/`
-  * macOS only: `aerospace/`
+  * `zsh/`, `nvim/`, `tmux/`
+  * macOS only: `ghostty/`, `aerospace/`, `yabai/`, `skhd/`
 * Optional overlays:
 
   * `os/Darwin/…`, `os/Linux/…`
@@ -44,8 +44,10 @@ What this does:
    * `~/.zshrc -> ~/dotfiles/zsh/.zshrc`
    * `~/.config/nvim -> ~/dotfiles/nvim/.config/nvim`
    * `~/.tmux.conf -> ~/dotfiles/tmux/.tmux.conf`
-   * `~/.config/ghostty -> ~/dotfiles/ghostty/.config/ghostty`
+   * macOS: `~/Library/Application Support/com.mitchellh.ghostty/config -> ~/dotfiles/ghostty/Library/Application Support/com.mitchellh.ghostty/config`
    * macOS: `~/.config/aerospace/aerospace.toml -> ~/dotfiles/aerospace/.config/aerospace/aerospace.toml`
+   * macOS: `~/.yabairc -> ~/dotfiles/yabai/.yabairc`
+   * macOS: `~/.config/skhd/skhdrc -> ~/dotfiles/skhd/.config/skhd/skhdrc`
 4. Applies `os/<OS>/…` and `hosts/<hostname>/…` overlays if present.
 
 ---
@@ -73,8 +75,10 @@ Each top-level dir is a package:
 zsh/.zshrc
 nvim/.config/nvim/...
 tmux/.tmux.conf
-ghostty/.config/ghostty/config
-aerospace/.config/aerospace/aerospace.toml   # macOS only
+ghostty/Library/Application Support/com.mitchellh.ghostty/config   # macOS only
+aerospace/.config/aerospace/aerospace.toml                         # macOS only
+yabai/.yabairc                                                     # macOS only
+skhd/.config/skhd/skhdrc                                           # macOS only
 ```
 
 Stow will link each package’s contents into `$HOME`.
@@ -117,6 +121,8 @@ alacritty/.config/alacritty/alacritty.yml
 ```bash
 make restow
 ```
+
+If the target file already exists outside Stow, run `./bootstrap.sh` once instead so it gets backed up to `~/dotfiles_backup/...` before linking.
 
 macOS/Linux-specific? Add the package name to `MAC_PACKAGES` or `LINUX_PACKAGES` arrays in `bootstrap.sh`.
 
@@ -164,7 +170,9 @@ Delete `~/dotfiles_backup` whenever you’re satisfied.
 ls -l ~/.zshrc
 ls -l ~/.tmux.conf
 ls -l ~/.config/nvim
-ls -l ~/.config/ghostty
+ls -l ~/Library/Application\\ Support/com.mitchellh.ghostty/config
+ls -l ~/.yabairc
+ls -l ~/.config/skhd/skhdrc
 ```
 
 You should see each pointing back into `~/dotfiles/...`.
@@ -200,4 +208,3 @@ Minimal, predictable symlink management. No magic.
 
 **How do I add macOS-only stuff later?**
 Put a package at the root and add its name to `MAC_PACKAGES` in `bootstrap.sh`. Or place it under `os/Darwin/<pkg>/…`.
-

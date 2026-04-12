@@ -255,4 +255,12 @@ dnscheck_save() {
     --db "\"$db_file\"" -j "\"$json_file\"" 2>&1 | tee "$log_file"
 }
 
-d
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+
+
+grepn() {
+    local num="$1"
+    shift
+    grep -A "$num" "$@"
+}

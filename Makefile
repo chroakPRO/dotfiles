@@ -1,6 +1,12 @@
 SHELL := /bin/bash
-PACKAGES := zsh nvim tmux ghostty
+OS := $(shell uname -s)
+PACKAGES := zsh nvim tmux
+MAC_PACKAGES := ghostty aerospace yabai skhd
 HOME_DIR := $(HOME)
+
+ifeq ($(OS),Darwin)
+PACKAGES += $(MAC_PACKAGES)
+endif
 
 .PHONY: install restow unstow
 
