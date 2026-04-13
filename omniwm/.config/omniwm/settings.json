@@ -1,0 +1,105 @@
+{
+  "version": 4,
+  "hotkeysEnabled": false,
+  "ipcEnabled": true,
+
+  "defaultLayoutType": "dwindle",
+
+  "focusFollowsMouse": false,
+  "moveMouseToFocusedWindow": true,
+
+  "gapSize": 0,
+  "outerGapLeft": 0,
+  "outerGapRight": 0,
+  "outerGapTop": 0,
+  "outerGapBottom": 0,
+
+  "workspaceBarEnabled": false,
+
+  "workspaceConfigurations": [
+    {
+      "id": "0f0e0d0c-0001-4a11-8111-111111111111",
+      "name": "1",
+      "displayName": "Z",
+      "monitorAssignment": { "type": "main" },
+      "layoutType": "dwindle"
+    },
+    {
+      "id": "0f0e0d0c-0002-4a22-8222-222222222222",
+      "name": "2",
+      "displayName": "X",
+      "monitorAssignment": { "type": "main" },
+      "layoutType": "dwindle"
+    },
+    {
+      "id": "0f0e0d0c-0003-4a33-8333-333333333333",
+      "name": "3",
+      "displayName": "C",
+      "monitorAssignment": { "type": "main" },
+      "layoutType": "dwindle"
+    },
+    {
+      "id": "0f0e0d0c-0004-4a44-8444-444444444444",
+      "name": "4",
+      "displayName": "B",
+      "monitorAssignment": { "type": "main" },
+      "layoutType": "dwindle"
+    },
+    {
+      "id": "0f0e0d0c-0005-4a55-8555-555555555555",
+      "name": "5",
+      "displayName": "M",
+      "monitorAssignment": { "type": "main" },
+      "layoutType": "dwindle"
+    },
+    {
+      "id": "0f0e0d0c-0006-4a66-8666-666666666666",
+      "name": "6",
+      "displayName": "P",
+      "monitorAssignment": { "type": "main" },
+      "layoutType": "dwindle"
+    },
+    {
+      "id": "0f0e0d0c-0007-4a77-8777-777777777777",
+      "name": "7",
+      "displayName": "O",
+      "monitorAssignment": { "type": "main" },
+      "layoutType": "dwindle"
+    },
+    {
+      "id": "0f0e0d0c-0008-4a88-8888-888888888888",
+      "name": "8",
+      "displayName": "I",
+      "monitorAssignment": { "type": "main" },
+      "layoutType": "dwindle"
+    },
+    {
+      "id": "0f0e0d0c-0009-4a99-8999-999999999999",
+      "name": "9",
+      "displayName": "Y",
+      "monitorAssignment": { "type": "main" },
+      "layoutType": "dwindle"
+    },
+    {
+      "id": "0f0e0d0c-0010-4aaa-8aaa-aaaaaaaaaaaa",
+      "name": "10",
+      "displayName": "T",
+      "monitorAssignment": { "type": "main" },
+      "layoutType": "dwindle"
+    },
+    {
+      "id": "0f0e0d0c-0011-4bbb-8bbb-bbbbbbbbbbbb",
+      "name": "11",
+      "displayName": "E",
+      "monitorAssignment": { "type": "main" },
+      "layoutType": "dwindle"
+    },
+    {
+      "id": "0f0e0d0c-0012-4ccc-8ccc-cccccccccccc",
+      "name": "12",
+      "displayName": "W",
+      "monitorAssignment": { "type": "main" },
+      "layoutType": "dwindle"
+    }
+  ]
+}

@@ -2,72 +2,75 @@
 :: service
 
 # focus windows
-default < alt - h : yabai -m window --focus west
-default < alt - j : yabai -m window --focus south
-default < alt - k : yabai -m window --focus north
-default < alt - l : yabai -m window --focus east
+default < alt - h : omniwmctl command focus left
+default < alt - j : omniwmctl command focus down
+default < alt - k : omniwmctl command focus up
+default < alt - l : omniwmctl command focus right
 
-# swap windows
-default < alt + shift - h : yabai -m window --swap west
-default < alt + shift - j : yabai -m window --swap south
-default < alt + shift - k : yabai -m window --swap north
-default < alt + shift - l : yabai -m window --swap east
+# move windows
+default < alt + shift - h : omniwmctl command move left
+default < alt + shift - j : omniwmctl command move down
+default < alt + shift - k : omniwmctl command move up
+default < alt + shift - l : omniwmctl command move right
 
-# punctuation keys must use keycodes
-# US ANSI physical key positions:
+# punctuation keys use keycodes
 # = 0x18
 # - 0x1B
 # ; 0x29
 # , 0x2B
 # / 0x2C
 
-default < alt - 0x1B : yabai -m space --balance
-default < alt - 0x18 : yabai -m window --toggle zoom-parent
-default < alt - 0x2C : yabai -m window --toggle split
-default < alt - 0x2B : yabai -m space --balance
+default < alt - 0x1B : omniwmctl command balance-sizes
+# no direct OmniWM equivalent for yabai zoom-parent
+# default < alt - 0x18 :
 
-# focus spaces: Z X C B M P O I Y T E W
-default < alt - z : yabai -m space --focus 1
-default < alt - x : yabai -m space --focus 2
-default < alt - c : yabai -m space --focus 3
-default < alt - b : yabai -m space --focus 4
-default < alt - m : yabai -m space --focus 5
-default < alt - p : yabai -m space --focus 6
-default < alt - o : yabai -m space --focus 7
-default < alt - i : yabai -m space --focus 8
-default < alt - y : yabai -m space --focus 9
-default < alt - t : yabai -m space --focus 10
-default < alt - e : yabai -m space --focus 11
-default < alt - w : yabai -m space --focus 12
+default < alt - 0x2C : omniwmctl command toggle-split
+default < alt - 0x2B : omniwmctl command balance-sizes
 
-# send window to space and follow it
-default < alt + shift - z : yabai -m window --space 1 --focus
-default < alt + shift - x : yabai -m window --space 2 --focus
-default < alt + shift - c : yabai -m window --space 3 --focus
-default < alt + shift - b : yabai -m window --space 4 --focus
-default < alt + shift - m : yabai -m window --space 5 --focus
-default < alt + shift - p : yabai -m window --space 6 --focus
-default < alt + shift - o : yabai -m window --space 7 --focus
-default < alt + shift - i : yabai -m window --space 8 --focus
-default < alt + shift - y : yabai -m window --space 9 --focus
-default < alt + shift - t : yabai -m window --space 10 --focus
-default < alt + shift - e : yabai -m window --space 11 --focus
-default < alt + shift - w : yabai -m window --space 12 --focus
+# focus workspaces by display name: Z X C B M P O I Y T E W
+default < alt - z : omniwmctl workspace focus-name Z
+default < alt - x : omniwmctl workspace focus-name X
+default < alt - c : omniwmctl workspace focus-name C
+default < alt - b : omniwmctl workspace focus-name B
+default < alt - m : omniwmctl workspace focus-name M
+default < alt - p : omniwmctl workspace focus-name P
+default < alt - o : omniwmctl workspace focus-name O
+default < alt - i : omniwmctl workspace focus-name I
+default < alt - y : omniwmctl workspace focus-name Y
+default < alt - t : omniwmctl workspace focus-name T
+default < alt - e : omniwmctl workspace focus-name E
+default < alt - w : omniwmctl workspace focus-name W
 
-default < alt - tab : yabai -m space --focus recent
-default < alt - f : yabai -m window --toggle zoom-fullscreen
-default < alt + shift - space : yabai -m window --toggle float
+# send window to workspace and follow it
+default < alt + shift - z : omniwmctl command move-to-workspace 1  && omniwmctl workspace focus-name Z
+default < alt + shift - x : omniwmctl command move-to-workspace 2  && omniwmctl workspace focus-name X
+default < alt + shift - c : omniwmctl command move-to-workspace 3  && omniwmctl workspace focus-name C
+default < alt + shift - b : omniwmctl command move-to-workspace 4  && omniwmctl workspace focus-name B
+default < alt + shift - m : omniwmctl command move-to-workspace 5  && omniwmctl workspace focus-name M
+default < alt + shift - p : omniwmctl command move-to-workspace 6  && omniwmctl workspace focus-name P
+default < alt + shift - o : omniwmctl command move-to-workspace 7  && omniwmctl workspace focus-name O
+default < alt + shift - i : omniwmctl command move-to-workspace 8  && omniwmctl workspace focus-name I
+default < alt + shift - y : omniwmctl command move-to-workspace 9  && omniwmctl workspace focus-name Y
+default < alt + shift - t : omniwmctl command move-to-workspace 10 && omniwmctl workspace focus-name T
+default < alt + shift - e : omniwmctl command move-to-workspace 11 && omniwmctl workspace focus-name E
+default < alt + shift - w : omniwmctl command move-to-workspace 12 && omniwmctl workspace focus-name W
+
+default < alt - tab : omniwmctl command switch-workspace back-and-forth
+default < alt - f : omniwmctl command toggle-fullscreen
+default < alt + shift - space : omniwmctl command toggle-focused-window-floating
 default < alt + shift - 0x29 ; service
 
 # service mode
 service < escape ; default
-service < r : yabai -m space --balance
-service < f : yabai -m window --toggle float
+service < r : omniwmctl command balance-sizes
+service < f : omniwmctl command toggle-focused-window-floating
 
-service < alt + shift - h : yabai -m window --warp west
-service < alt + shift - j : yabai -m window --warp south
-service < alt + shift - k : yabai -m window --warp north
-service < alt + shift - l : yabai -m window --warp east
+# OmniWM has no separate directional "warp" action.
+# Closest mapping is the same directional move command.
+service < alt + shift - h : omniwmctl command move left
+service < alt + shift - j : omniwmctl command move down
+service < alt + shift - k : omniwmctl command move up
+service < alt + shift - l : omniwmctl command move right
 
 service < down : osascript -e 'set volume output volume ((output volume of (get volume settings)) - 6)'
 service < up : osascript -e 'set volume output volume ((output volume of (get volume settings)) + 6)'

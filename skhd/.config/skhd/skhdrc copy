@@ -1,0 +1,74 @@
+:: default
+:: service
+
+# focus windows
+default < alt - h : yabai -m window --focus west
+default < alt - j : yabai -m window --focus south
+default < alt - k : yabai -m window --focus north
+default < alt - l : yabai -m window --focus east
+
+# swap windows
+default < alt + shift - h : yabai -m window --swap west
+default < alt + shift - j : yabai -m window --swap south
+default < alt + shift - k : yabai -m window --swap north
+default < alt + shift - l : yabai -m window --swap east
+
+# punctuation keys must use keycodes
+# US ANSI physical key positions:
+# = 0x18
+# - 0x1B
+# ; 0x29
+# , 0x2B
+# / 0x2C
+
+default < alt - 0x1B : yabai -m space --balance
+default < alt - 0x18 : yabai -m window --toggle zoom-parent
+default < alt - 0x2C : yabai -m window --toggle split
+default < alt - 0x2B : yabai -m space --balance
+
+# focus spaces: Z X C B M P O I Y T E W
+default < alt - z : yabai -m space --focus 1
+default < alt - x : yabai -m space --focus 2
+default < alt - c : yabai -m space --focus 3
+default < alt - b : yabai -m space --focus 4
+default < alt - m : yabai -m space --focus 5
+default < alt - p : yabai -m space --focus 6
+default < alt - o : yabai -m space --focus 7
+default < alt - i : yabai -m space --focus 8
+default < alt - y : yabai -m space --focus 9
+default < alt - t : yabai -m space --focus 10
+default < alt - e : yabai -m space --focus 11
+default < alt - w : yabai -m space --focus 12
+
+# send window to space and follow it
+default < alt + shift - z : yabai -m window --space 1 --focus
+default < alt + shift - x : yabai -m window --space 2 --focus
+default < alt + shift - c : yabai -m window --space 3 --focus
+default < alt + shift - b : yabai -m window --space 4 --focus
+default < alt + shift - m : yabai -m window --space 5 --focus
+default < alt + shift - p : yabai -m window --space 6 --focus
+default < alt + shift - o : yabai -m window --space 7 --focus
+default < alt + shift - i : yabai -m window --space 8 --focus
+default < alt + shift - y : yabai -m window --space 9 --focus
+default < alt + shift - t : yabai -m window --space 10 --focus
+default < alt + shift - e : yabai -m window --space 11 --focus
+default < alt + shift - w : yabai -m window --space 12 --focus
+
+default < alt - tab : yabai -m space --focus recent
+default < alt - f : yabai -m window --toggle zoom-fullscreen
+default < alt + shift - space : yabai -m window --toggle float
+default < alt + shift - 0x29 ; service
+
+# service mode
+service < escape ; default
+service < r : yabai -m space --balance
+service < f : yabai -m window --toggle float
+
+service < alt + shift - h : yabai -m window --warp west
+service < alt + shift - j : yabai -m window --warp south
+service < alt + shift - k : yabai -m window --warp north
+service < alt + shift - l : yabai -m window --warp east
+
+service < down : osascript -e 'set volume output volume ((output volume of (get volume settings)) - 6)'
+service < up : osascript -e 'set volume output volume ((output volume of (get volume settings)) + 6)'
+service < shift - down : osascript -e 'set volume output volume 0'
