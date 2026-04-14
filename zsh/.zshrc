@@ -145,7 +145,7 @@ export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 alias sshp='ssh -o PreferredAuthentications=password'
 alias scpp='scp -o PreferredAuthentications=password'
-
+alias sftpp='sftp -o PreferredAuthentications=password'
 # Final PATH override - ensure conda comes first
 export PATH="/Users/chek/miniconda/bin:$PATH"
 
