@@ -146,6 +146,32 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 alias sshp='ssh -o PreferredAuthentications=password'
 alias scpp='scp -o PreferredAuthentications=password'
 alias sftpp='sftp -o PreferredAuthentications=password'
+
+help() {
+  cat <<'EOF'
+Custom zshrc shortcuts and functions
+
+Aliases:
+  sshp                 ssh with password authentication preferred
+  scpp                 scp with password authentication preferred
+  sftpp                sftp with password authentication preferred
+
+Functions:
+  help                 show this zshrc shortcut/function reference
+  zof                  jump to a zoxide directory selected with fzf
+  dnscheck <domain>    run dnsrecon records-only analysis in the console
+  dnscheck_save <domain>
+                       run dnsrecon records-only analysis and save JSON/DB/log
+  grepn <n> <pattern> [file...]
+                       grep and include n lines after each match
+  fip <host> <port...> forward local port(s) to the same port(s) on a host
+  dip <port...>        stop SSH forwards for the given local port(s)
+  lip                  list active SSH local port forwards
+
+Internal helpers:
+  _dnsrecon_cmd        locate the dnsrecon executable/script for dnscheck
+EOF
+}
 # Final PATH override - ensure conda comes first
 export PATH="/Users/chek/miniconda/bin:$PATH"
 
