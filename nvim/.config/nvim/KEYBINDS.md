@@ -20,6 +20,19 @@
 | `<leader>pWs` | Grep for current WORD under cursor |
 | `<leader>ps` | Manual search term input |
 
+## Harpoon
+
+| Key Binding | Description |
+|-------------|-------------|
+| `<leader>a` | Add current file to Harpoon |
+| `<leader><C-1>` | Open Harpoon item 1 |
+| `<leader><C-2>` | Open Harpoon item 2 |
+| `<leader><C-3>` | Open Harpoon item 3 |
+| `<leader><C-4>` | Open Harpoon item 4 |
+| `<C-S-P>` | Previous Harpoon item |
+| `<C-S-N>` | Next Harpoon item |
+| `<leader>e` | Open Harpoon Telescope picker |
+
 ## Visual Mode Line Movement
 
 | Key Binding | Description |

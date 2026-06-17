@@ -26,6 +26,13 @@ end
 vim.filetype.add({
     extension = {
         templ = 'templ',
+    },
+    filename = {
+        ['Chart.yaml'] = 'helm',
+    },
+    pattern = {
+        ['.*/templates/.*%.ya?ml'] = 'helm',
+        ['.*/templates/.*%.tpl'] = 'helm',
     }
 })
 
