@@ -1,6 +1,9 @@
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
 
+# Keep the source path so help can discover custom commands from this file.
+typeset -g _zshrc_file="${${(%):-%x}:A}"
+
 # Prioritize conda Python
 export PATH="/Users/chek/miniconda/bin:$PATH"
 
@@ -148,29 +151,74 @@ alias scpp='scp -o PreferredAuthentications=password'
 alias sftpp='sftp -o PreferredAuthentications=password'
 
 help() {
-  cat <<'EOF'
-Custom zshrc shortcuts and functions
+  local -A descriptions=(
+    sshp          "ssh with password authentication preferred"
+    scpp          "scp with password authentication preferred"
+    sftpp         "sftp with password authentication preferred"
+    help          "show this dynamic zshrc shortcut/function reference"
+    zof           "jump to a zoxide directory selected with fzf"
+    dnscheck      "run dnsrecon records-only analysis in the console"
+    dnscheck_save "run dnsrecon analysis and save JSON/DB/log"
+    grepn         "grep and include n lines after each match"
+    fip           "forward local port(s) to the same port(s) on a host"
+    dip           "stop SSH forwards for the given local port(s)"
+    lip           "list active SSH local port forwards"
+    _dnsrecon_cmd "locate the dnsrecon executable/script"
+  )
+  local -a custom_aliases custom_functions internal_functions
+  local line name
 
-Aliases:
-  sshp                 ssh with password authentication preferred
-  scpp                 scp with password authentication preferred
-  sftpp                sftp with password authentication preferred
+  if [[ ! -r "$_zshrc_file" ]]; then
+    print -u2 "help: cannot read $_zshrc_file"
+    return 1
+  fi
 
-Functions:
-  help                 show this zshrc shortcut/function reference
-  zof                  jump to a zoxide directory selected with fzf
-  dnscheck <domain>    run dnsrecon records-only analysis in the console
-  dnscheck_save <domain>
-                       run dnsrecon records-only analysis and save JSON/DB/log
-  grepn <n> <pattern> [file...]
-                       grep and include n lines after each match
-  fip <host> <port...> forward local port(s) to the same port(s) on a host
-  dip <port...>        stop SSH forwards for the given local port(s)
-  lip                  list active SSH local port forwards
+  # Discover top-level alias and function declarations in this zshrc, then
+  # include only commands that are active in the current shell.
+  while IFS= read -r line; do
+    if [[ $line =~ "^alias[[:space:]]+([[:alnum:]_.:-]+)=" ]]; then
+      name="$match[1]"
+      (( ${+aliases[$name]} )) && custom_aliases+=("$name")
+    elif [[ $line =~ "^([[:alpha:]_][[:alnum:]_]*)[[:space:]]*\\(\\)[[:space:]]*\\{" ]]; then
+      name="$match[1]"
+      (( ${+functions[$name]} )) || continue
+      if [[ $name == _* ]]; then
+        internal_functions+=("$name")
+      else
+        custom_functions+=("$name")
+      fi
+    fi
+  done < "$_zshrc_file"
 
-Internal helpers:
-  _dnsrecon_cmd        locate the dnsrecon executable/script for dnscheck
-EOF
+  custom_aliases=( ${(ou)custom_aliases} )
+  custom_functions=( ${(ou)custom_functions} )
+  internal_functions=( ${(ou)internal_functions} )
+
+  print "Custom zshrc shortcuts and functions"
+  print "\nAliases:"
+  if (( ${#custom_aliases} )); then
+    for name in "${custom_aliases[@]}"; do
+      printf "  %-18s %s\n" "$name" "${descriptions[$name]:-${aliases[$name]}}"
+    done
+  else
+    print "  (none)"
+  fi
+
+  print "\nFunctions:"
+  if (( ${#custom_functions} )); then
+    for name in "${custom_functions[@]}"; do
+      printf "  %-18s %s\n" "$name" "${descriptions[$name]:-custom function}"
+    done
+  else
+    print "  (none)"
+  fi
+
+  if (( ${#internal_functions} )); then
+    print "\nInternal helpers:"
+    for name in "${internal_functions[@]}"; do
+      printf "  %-18s %s\n" "$name" "${descriptions[$name]:-internal helper}"
+    done
+  fi
 }
 # Final PATH override - ensure conda comes first
 export PATH="/Users/chek/miniconda/bin:$PATH"
