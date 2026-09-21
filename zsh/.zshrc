@@ -161,8 +161,9 @@ help() {
     dnscheck_save "run dnsrecon analysis and save JSON/DB/log"
     grepn         "grep and include n lines after each match"
     fip           "forward local port(s) to the same port(s) on a host"
-    dip           "stop SSH forwards for the given local port(s)"
-    lip           "list active SSH local port forwards"
+    tip           "SSH forwards: l = local listener (-L), r = listener on the SSH server (-R); supports listen:dest"
+    dip           "stop SSH forwards (-L and -R) matching a port on either end"
+    lip           "list active SSH port forwards (-L and -R)"
     _dnsrecon_cmd "locate the dnsrecon executable/script"
   )
   local -a custom_aliases custom_functions internal_functions
@@ -352,15 +353,68 @@ fip() {
 }
 
 dip() {
-  (( $# == 0 )) && { echo "Usage: dip <port1> [port2] ..."; return 1; }
+  (( $# == 0 )) && { echo "Usage: dip <port1> [port2] ... (matches either end of a forward)"; return 1; }
   local port
   for port in "$@"; do
-    pkill -f -- "ssh .* -L ${port}:localhost:${port}( |$)" &&
-      echo "Stopped forwarding port ${port}" ||
+    pkill -f -- "ssh .* -[LR] (${port}:[^ ]+:[0-9]+|[0-9]+:[^ ]+:${port})( |$)" &&
+      echo "Stopped forwarding on port ${port}" ||
       echo "No forwarding on port ${port}"
   done
 }
 
 lip() {
-  pgrep -af -- "ssh .* -L [0-9]+:localhost:[0-9]+" || echo "No active forwards"
+  # -a is "include ancestors" on macOS (not "full command" as on Linux); use -l -f
+  pgrep -lf -- "ssh .* -[LR] [0-9]+:[^ ]+:[0-9]+" || echo "No active forwards"
+}
+
+# SSH port forwards, both directions (OpenSSH semantics):
+#   -L: the listening socket is LOCAL (on this machine); connections to it are
+#       tunneled through <host> and connect from there to localhost:<dest>.
+#   -R: the listening socket is REMOTE (on the SSH server <host>); connections
+#       to it are tunneled back and connect to localhost:<dest> on this machine.
+#   Each port arg is either <port> (same on both ends) or <listen:dest>:
+#     -L listen = local port,  dest = port on <host>
+#     -R listen = port on <host>, dest = port on this machine
+#   tip l <host> [port|listen:dest] ...  -> local listener  (-L)
+#   tip r <host> [port|listen:dest] ...  -> remote listener (-R)
+tip() {
+  if (( $# < 3 )) || [[ $1 != (l|L|r|R) ]]; then
+    echo "Usage: tip <l|r> <host> <port|listen:dest> [more ports ...]"
+    echo "  l = local forward   (-L: listening socket on THIS machine)"
+    echo "      local:listen -> host:dest"
+    echo "  r = reverse forward (-R: listening socket on the SSH SERVER)"
+    echo "      host:listen -> local:dest"
+    echo "  Ports may differ on each end; write them as listen:dest."
+    echo ""
+    echo "Examples:"
+    echo "  tip l user@remote 8888        # your machine:8888 -> remote:8888  (e.g. remote Jupyter)"
+    echo "  tip l user@remote 6666:8888   # your machine:6666 -> remote:8888  (remote 8888, local 6666)"
+    echo "  tip r user@remote 3000        # remote:3000 -> your machine:3000 (e.g. expose local dev server)"
+    echo "  tip r user@remote 8888:6666   # remote:8888 -> your machine:6666 (remote 8888, local 6666)"
+    return 1
+  fi
+  local dir="$1" host="$2"
+  shift 2
+  local flag="-L"
+  [[ $dir == (r|R) ]] && flag="-R"
+  local spec listen dest
+  for spec in "$@"; do
+    if [[ $spec == (<->:<->) ]]; then
+      listen="${spec%%:*}"
+      dest="${spec##*:}"
+    elif [[ $spec == <-> ]]; then
+      listen="$spec"
+      dest="$spec"
+    else
+      echo "Skipping invalid port spec '${spec}' (use <port> or <listen:dest>)"
+      continue
+    fi
+    if ssh -f -N "$flag" "${listen}:localhost:${dest}" "$host"; then
+      if [[ $flag == "-L" ]]; then
+        echo "-L local:localhost:${listen} -> localhost:${dest} on ${host}"
+      else
+        echo "-R ${host}:localhost:${listen} -> localhost:${dest} on this machine"
+      fi
+    fi
+  done
 }
