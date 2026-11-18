@@ -165,7 +165,7 @@ help() {
     sshp          "ssh with password authentication preferred"
     scpp          "scp with password authentication preferred"
     sftpp         "sftp with password authentication preferred"
-    pgp           "encrypt or decrypt pasted OpenPGP messages"
+    pgp           "encrypt, decrypt, sign, or verify OpenPGP messages"
     help          "show this dynamic zshrc shortcut/function reference"
     zof           "jump to a zoxide directory selected with fzf"
     dnscheck      "run dnsrecon records-only analysis in the console"

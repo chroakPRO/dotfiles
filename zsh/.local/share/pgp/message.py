@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Encrypt or decrypt pasted text without storing keys or messages on disk."""
+"""Interactive in-memory OpenPGP encryption, decryption, signing, and verification."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ import os
 import subprocess
 import sys
 import warnings
+from contextlib import contextmanager
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
@@ -28,8 +29,8 @@ def styled(text: str, code: str) -> str:
 
 
 def banner() -> None:
-    title = "PGP PASTE TOOL"
-    subtitle = "Encrypt or decrypt without saving your input"
+    title = "PGP TOOLKIT"
+    subtitle = "Encrypt · Decrypt · Sign · Verify"
     print()
     print(styled("╭" + "─" * WIDTH + "╮", "36"))
     print(styled(f"│  🔐  {title:<{WIDTH - 6}}│", "1;36"))
@@ -87,7 +88,6 @@ def check_dependencies():
         DEPENDENCY_DIR.mkdir(parents=True, exist_ok=True)
         requirements = ["PGPy==0.6.0"]
         if sys.version_info >= (3, 13):
-            # Python 3.13 removed imghdr, which PGPy 0.6.0 still imports.
             requirements.append("standard-imghdr==3.13.0")
         try:
             subprocess.run(
@@ -118,90 +118,244 @@ def check_dependencies():
     return PGPKey, PGPMessage, pgpy_version
 
 
-def read_private_key() -> str:
+def choose_action() -> str | None:
+    print()
+    print(styled("  Choose an action", "1;35"))
+    options = [
+        ("1", "Encrypt", "Use somebody's public key, or a private key"),
+        ("2", "Decrypt", "Use your private key"),
+        ("3", "Sign", "Create a clear-signed message with your private key"),
+        ("4", "Verify", "Check a clear-signed message with a public key"),
+        ("q", "Quit", "Exit without doing anything"),
+    ]
+    for number, name, description in options:
+        print(
+            f"    {styled(number, '1;36')}  "
+            f"{styled(f'{name:<8}', '1')} "
+            f"{styled(description, '2')}"
+        )
+    print()
+    print(styled("    Selection › ", "1;35"), end="", flush=True)
+    choice = sys.stdin.readline()
+    if choice == "":
+        raise EOFError("No menu selection was entered.")
+
+    choice = choice.strip().lower()
+    if choice in {"q", "quit", "exit"}:
+        return None
+
+    actions = {
+        "1": "encrypt",
+        "e": "encrypt",
+        "encrypt": "encrypt",
+        "2": "decrypt",
+        "d": "decrypt",
+        "decrypt": "decrypt",
+        "3": "sign",
+        "s": "sign",
+        "sign": "sign",
+        "4": "verify",
+        "v": "verify",
+        "verify": "verify",
+    }
+    if choice not in actions:
+        raise ValueError("Choose 1, 2, 3, 4, or q.")
+    return actions[choice]
+
+
+def read_key(step_number: int, PGPKey, *, require_private: bool, purpose: str):
+    accepted = "private key" if require_private else "public or private key"
     step(
-        1,
-        "PRIVATE KEY",
+        step_number,
+        f"{purpose.upper()} KEY",
         [
-            "Paste the complete armored private key below.",
-            "It will be visible and stops automatically at its END line.",
+            f"Paste the complete armored {accepted} below.",
+            "The paste is visible and stops automatically at its END line.",
         ],
     )
-    lines: list[str] = []
-    while True:
+
+    first = sys.stdin.readline()
+    if first == "":
+        raise EOFError("No key was pasted.")
+
+    begin = first.strip()
+    key_end_markers = {
+        "-----BEGIN PGP PUBLIC KEY BLOCK-----": "-----END PGP PUBLIC KEY BLOCK-----",
+        "-----BEGIN PGP PRIVATE KEY BLOCK-----": "-----END PGP PRIVATE KEY BLOCK-----",
+    }
+    if begin not in key_end_markers:
+        raise ValueError("Expected an armored PGP public or private key.")
+
+    end_marker = key_end_markers[begin]
+    lines = [first]
+    while lines[-1].strip() != end_marker:
         line = sys.stdin.readline()
         if line == "":
-            raise EOFError("Input ended before the private key was complete.")
+            raise EOFError(f"Input ended before {end_marker}.")
         lines.append(line)
-        if line.strip() == "-----END PGP PRIVATE KEY BLOCK-----":
-            break
-    return "".join(lines)
+
+    key, _ = PGPKey.from_blob("".join(lines))
+    if require_private and key.is_public:
+        raise ValueError(f"{purpose.capitalize()} requires a private key.")
+
+    fingerprint = str(key.fingerprint)
+    grouped_fingerprint = " ".join(
+        fingerprint[index : index + 4] for index in range(0, len(fingerprint), 4)
+    )
+    key_kind = "Public key" if key.is_public else "Private key"
+    status(f"{key_kind} loaded · {grouped_fingerprint}")
+    return key
 
 
-def read_payload() -> str:
+def read_plaintext(step_number: int, purpose: str) -> str:
     step(
-        2,
-        "MESSAGE",
+        step_number,
+        "PLAINTEXT",
         [
-            "Paste plaintext to encrypt, or an armored PGP message to decrypt.",
-            "Plaintext encrypts on Return; PGP stops at its END line.",
+            f"Type or paste one line to {purpose}.",
+            "The operation starts immediately when you press Return.",
+        ],
+    )
+    text = sys.stdin.readline()
+    if text == "":
+        raise EOFError("No plaintext was entered.")
+    if not text.strip():
+        raise ValueError("The plaintext was empty.")
+    return text
+
+
+def read_armored_block(
+    step_number: int,
+    *,
+    title: str,
+    begin_marker: str,
+    end_marker: str,
+) -> str:
+    step(
+        step_number,
+        title,
+        [
+            f"Paste from {begin_marker}",
+            f"through {end_marker}; it stops automatically.",
         ],
     )
     first = sys.stdin.readline()
     if first == "":
-        raise EOFError("No message was pasted.")
+        raise EOFError(f"No {title.lower()} was pasted.")
+    if first.strip() != begin_marker:
+        raise ValueError(f"Expected {begin_marker}.")
 
-    lines: list[str] = [first]
-    is_armored_message = first.strip() == "-----BEGIN PGP MESSAGE-----"
-    if not is_armored_message:
-        return first
-
-    while True:
+    lines = [first]
+    while lines[-1].strip() != end_marker:
         line = sys.stdin.readline()
         if line == "":
-            raise EOFError("Input ended before the END PGP MESSAGE line.")
+            raise EOFError(f"Input ended before {end_marker}.")
         lines.append(line)
-        if line.strip() == "-----END PGP MESSAGE-----":
-            break
     return "".join(lines)
 
 
-def decrypt_text(key, armored_message: str, PGPMessage) -> str:
-    armored_message = normalize_armored_message(armored_message)
-    message = PGPMessage.from_blob(armored_message)
+@contextmanager
+def unlocked_key(key):
+    if not key.is_protected:
+        yield key
+        return
 
-    if key.is_protected:
-        passphrase = getpass.getpass("Private-key passphrase: ")
+    passphrase = getpass.getpass("    Private-key passphrase › ")
+    try:
         with key.unlock(passphrase):
-            decrypted = key.decrypt(message).message
+            yield key
+    finally:
         passphrase = ""
-    else:
-        decrypted = key.decrypt(message).message
 
-    if isinstance(decrypted, bytes):
+
+def message_text(value) -> str:
+    if isinstance(value, bytes):
         try:
-            return decrypted.decode("utf-8")
+            return value.decode("utf-8")
         except UnicodeDecodeError:
-            encoded = base64.b64encode(decrypted).decode("ascii")
+            encoded = base64.b64encode(value).decode("ascii")
             return "[Binary result shown as Base64]\n" + encoded
-    return str(decrypted)
+    return str(value)
 
 
 def normalize_armored_message(armored_message: str) -> str:
     """Repair two frequent paste errors without altering valid armor."""
     text = armored_message.strip()
 
-    # Some chat/JSON copies contain visible backslash-n sequences.
     if "\\n" in text and "\n" not in text:
         text = text.replace("\\r\\n", "\n").replace("\\n", "\n")
 
     lines = text.splitlines()
     if lines and lines[0].strip() == "-----BEGIN PGP MESSAGE-----":
-        # OpenPGP armor requires a blank line between its optional headers and
-        # Base64 body. Add it when a paste omitted it and has no armor headers.
         if len(lines) > 1 and lines[1].strip() and ":" not in lines[1]:
             lines.insert(1, "")
     return "\n".join(lines) + "\n"
+
+
+def encrypt_action(PGPKey, PGPMessage) -> None:
+    key = read_key(2, PGPKey, require_private=False, purpose="recipient")
+    plaintext = read_plaintext(3, "encrypt")
+    recipient = key if key.is_public else key.pubkey
+    print(styled("\n  Encrypting...", "1;33"))
+    encrypted = recipient.encrypt(PGPMessage.new(plaintext))
+    result_panel("ENCRYPTED PGP MESSAGE", str(encrypted), "36")
+
+
+def decrypt_action(PGPKey, PGPMessage) -> None:
+    key = read_key(2, PGPKey, require_private=True, purpose="decryption")
+    armored = read_armored_block(
+        3,
+        title="ENCRYPTED MESSAGE",
+        begin_marker="-----BEGIN PGP MESSAGE-----",
+        end_marker="-----END PGP MESSAGE-----",
+    )
+    print(styled("\n  Decrypting...", "1;33"))
+    message = PGPMessage.from_blob(normalize_armored_message(armored))
+    with unlocked_key(key):
+        decrypted = key.decrypt(message).message
+    result_panel("DECRYPTED PLAINTEXT", message_text(decrypted), "32")
+
+
+def sign_action(PGPKey, PGPMessage) -> None:
+    key = read_key(2, PGPKey, require_private=True, purpose="signing")
+    plaintext = read_plaintext(3, "sign")
+    print(styled("\n  Signing...", "1;33"))
+    message = PGPMessage.new(plaintext, cleartext=True)
+    with unlocked_key(key):
+        signature = key.sign(message)
+    message |= signature
+    result_panel("CLEAR-SIGNED PGP MESSAGE", str(message), "36")
+
+
+def verify_action(PGPKey, PGPMessage) -> bool:
+    key = read_key(2, PGPKey, require_private=False, purpose="verification")
+    armored = read_armored_block(
+        3,
+        title="SIGNED MESSAGE",
+        begin_marker="-----BEGIN PGP SIGNED MESSAGE-----",
+        end_marker="-----END PGP SIGNATURE-----",
+    )
+    print(styled("\n  Verifying...", "1;33"))
+    message = PGPMessage.from_blob(armored)
+    verification_key = key if key.is_public else key.pubkey
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="TODO:.*",
+            category=UserWarning,
+            module="pgpy.pgp",
+        )
+        valid = bool(verification_key.verify(message))
+
+    if valid:
+        result_panel("✓ VALID SIGNATURE · PLAINTEXT", message_text(message.message), "32")
+    else:
+        result_panel(
+            "✗ INVALID SIGNATURE",
+            "The signature does not match this message and key.",
+            "31",
+        )
+    return valid
 
 
 def main() -> int:
@@ -214,28 +368,20 @@ def main() -> int:
                 "1;32",
             )
         )
-        private_key_text = read_private_key()
-        key, _ = PGPKey.from_blob(private_key_text)
-        if key.is_public:
-            raise ValueError("That is a public key; decryption requires a private key.")
-        fingerprint = str(key.fingerprint)
-        grouped_fingerprint = " ".join(
-            fingerprint[index : index + 4] for index in range(0, len(fingerprint), 4)
-        )
-        status(f"Key loaded · {grouped_fingerprint}")
 
-        payload = read_payload()
-        if not payload:
-            raise ValueError("The message was empty.")
+        action = choose_action()
+        if action is None:
+            print(styled("\n  Goodbye.", "2"))
+            return 0
 
-        if payload.lstrip().startswith("-----BEGIN PGP MESSAGE-----"):
-            print(styled("\n  Decrypting...", "1;33"))
-            decrypted = decrypt_text(key, payload, PGPMessage)
-            result_panel("DECRYPTED PLAINTEXT", decrypted, "32")
-        else:
-            print(styled("\n  Encrypting...", "1;33"))
-            encrypted = key.pubkey.encrypt(PGPMessage.new(payload))
-            result_panel("ENCRYPTED PGP MESSAGE", str(encrypted), "36")
+        if action == "encrypt":
+            encrypt_action(PGPKey, PGPMessage)
+        elif action == "decrypt":
+            decrypt_action(PGPKey, PGPMessage)
+        elif action == "sign":
+            sign_action(PGPKey, PGPMessage)
+        elif action == "verify":
+            return 0 if verify_action(PGPKey, PGPMessage) else 2
         return 0
     except (EOFError, RuntimeError, ValueError) as error:
         print(styled(f"\n  ✗ Error: {error}", "1;31"), file=sys.stderr)
@@ -249,12 +395,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    try:
-        raise SystemExit(main())
-    finally:
-        # Best-effort cleanup of Python references. The process exits immediately
-        # afterward; no pasted key or message is deliberately written to disk.
-        for variable in ("private_key_text", "payload", "key"):
-            globals().pop(variable, None)
-
-
+    raise SystemExit(main())
