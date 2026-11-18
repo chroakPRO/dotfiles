@@ -150,11 +150,22 @@ alias sshp='ssh -o PreferredAuthentications=password'
 alias scpp='scp -o PreferredAuthentications=password'
 alias sftpp='sftp -o PreferredAuthentications=password'
 
+pgp() {
+  local script="$HOME/.local/share/pgp/message.py"
+  if [[ ! -r "$script" ]]; then
+    print -u2 "pgp: script not found: $script"
+    print -u2 "Run 'make restow' in your dotfiles repository."
+    return 1
+  fi
+  python3 "$script" "$@"
+}
+
 help() {
   local -A descriptions=(
     sshp          "ssh with password authentication preferred"
     scpp          "scp with password authentication preferred"
     sftpp         "sftp with password authentication preferred"
+    pgp           "encrypt or decrypt pasted OpenPGP messages"
     help          "show this dynamic zshrc shortcut/function reference"
     zof           "jump to a zoxide directory selected with fzf"
     dnscheck      "run dnsrecon records-only analysis in the console"
