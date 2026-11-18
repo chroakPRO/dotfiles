@@ -14,7 +14,6 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 
-END_MARKER = "::END::"
 DEPENDENCY_DIR = (
     Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache"))
     / "pgp-paste-tool"
@@ -86,6 +85,10 @@ def check_dependencies():
     except (ImportError, PackageNotFoundError):
         print(styled("Installing the OpenPGP engine (first run only)...", "1;33"))
         DEPENDENCY_DIR.mkdir(parents=True, exist_ok=True)
+        requirements = ["PGPy==0.6.0"]
+        if sys.version_info >= (3, 13):
+            # Python 3.13 removed imghdr, which PGPy 0.6.0 still imports.
+            requirements.append("standard-imghdr==3.13.0")
         try:
             subprocess.run(
                 [
@@ -97,7 +100,7 @@ def check_dependencies():
                     "--disable-pip-version-check",
                     "--target",
                     str(DEPENDENCY_DIR),
-                    "PGPy==0.6.0",
+                    *requirements,
                 ],
                 check=True,
             )
@@ -141,7 +144,7 @@ def read_payload() -> str:
         "MESSAGE",
         [
             "Paste plaintext to encrypt, or an armored PGP message to decrypt.",
-            f"PGP stops automatically; finish plaintext with {END_MARKER}.",
+            "Plaintext encrypts on Return; PGP stops at its END line.",
         ],
     )
     first = sys.stdin.readline()
@@ -150,19 +153,16 @@ def read_payload() -> str:
 
     lines: list[str] = [first]
     is_armored_message = first.strip() == "-----BEGIN PGP MESSAGE-----"
+    if not is_armored_message:
+        return first
+
     while True:
         line = sys.stdin.readline()
         if line == "":
-            expected = "the END PGP MESSAGE line" if is_armored_message else END_MARKER
-            raise EOFError(f"Input ended before {expected}.")
-        if is_armored_message:
-            lines.append(line)
-            if line.strip() == "-----END PGP MESSAGE-----":
-                break
-        elif line.rstrip("\r\n") == END_MARKER:
+            raise EOFError("Input ended before the END PGP MESSAGE line.")
+        lines.append(line)
+        if line.strip() == "-----END PGP MESSAGE-----":
             break
-        else:
-            lines.append(line)
     return "".join(lines)
 
 
