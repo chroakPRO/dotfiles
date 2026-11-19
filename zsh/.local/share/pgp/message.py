@@ -55,7 +55,9 @@ def result_panel(title: str, content: str, color: str) -> None:
     remaining = max(1, WIDTH - len(heading))
     print()
     print(styled("╭─" + heading + "─" * remaining, f"1;{color}"))
+    print()
     print(content.rstrip("\n"))
+    print()
     print(styled("╰─" + "─" * WIDTH, f"1;{color}"))
     print(styled("  Done. Copy only the content between the lines above.", "2"))
 
@@ -269,11 +271,12 @@ def unlocked_key(key):
 
 
 def message_text(value) -> str:
-    if isinstance(value, bytes):
+    if isinstance(value, (bytes, bytearray, memoryview)):
+        raw = bytes(value)
         try:
-            return value.decode("utf-8")
+            return raw.decode("utf-8")
         except UnicodeDecodeError:
-            encoded = base64.b64encode(value).decode("ascii")
+            encoded = base64.b64encode(raw).decode("ascii")
             return "[Binary result shown as Base64]\n" + encoded
     return str(value)
 
@@ -313,7 +316,13 @@ def decrypt_action(PGPKey, PGPMessage) -> None:
     message = PGPMessage.from_blob(normalize_armored_message(armored))
     with unlocked_key(key):
         decrypted = key.decrypt(message).message
-    result_panel("DECRYPTED PLAINTEXT", message_text(decrypted), "32")
+    rendered = message_text(decrypted)
+    title = (
+        "DECRYPTED SIGNED MESSAGE"
+        if rendered.lstrip().startswith("-----BEGIN PGP SIGNED MESSAGE-----")
+        else "DECRYPTED PLAINTEXT"
+    )
+    result_panel(title, rendered, "32")
 
 
 def sign_action(PGPKey, PGPMessage) -> None:
